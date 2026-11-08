@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&family=League+Spartan:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root { --ink:#1f2430; --muted:#5b6170; --line:#d9dce3; --accent:#4b1f5c; --bg:#f4f5f8; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); background:var(--bg); }
+  header.bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+  header.bar h1 { font-size:17px; margin:0; font-weight:650; }
+  header.bar a, .linkbtn { color:var(--accent); font-weight:600; text-decoration:none; font-size:15px; }
+  main { max-width:1180px; margin:0 auto; padding:16px; }
+  .layout { display:grid; gap:20px; }
+  @media (min-width: 900px) { .layout.edit { grid-template-columns: minmax(0,1fr) 400px; align-items:start; } .layout.edit .previewcol { position:sticky; top:70px; } }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .panel h2 { font-size:15px; margin:0 0 12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  label { display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:4px; }
+  input, select { width:100%; font-size:16px; padding:10px 11px; border:1px solid #c7cbd4; border-radius:8px; background:#fff; color:var(--ink); }
+  input:focus, select:focus { outline:2px solid #8a5fa0; border-color:transparent; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .grid2 > div, .field { margin-bottom:12px; }
+  .row { display:grid; grid-template-columns: 1fr 1fr auto; gap:8px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; background:#fafbfc; }
+  .row.hl { background:#fff4f4; border-color:#f0c4c4; }
+  .row.hl input.person { display:none; }
+  .row.hl { grid-template-columns: 1fr auto; }
+  .row .tools { display:flex; gap:4px; }
+  .row .tools button { width:38px; height:38px; padding:0; font-size:16px; }
+  @media (max-width: 560px) {
+    .row { grid-template-columns: 1fr auto; }
+    .row input.person { grid-column: 1 / 2; }
+    .row .tools { grid-row: 1 / span 2; grid-column: 2; flex-direction:column; }
+    .row.hl .tools { grid-row:auto; flex-direction:row; }
+    .grid2 { grid-template-columns:1fr; }
+  }
+  button { font-size:15px; font-weight:600; border-radius:8px; border:1px solid #c7cbd4; background:#fff; color:var(--ink); padding:10px 14px; cursor:pointer; }
+  button:hover { background:#f0f1f4; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.primary:hover { background:#3a1748; }
+  button.danger { color:#a01919; }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; }
+  .commtoggle { display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #f0c4c4; background:#fff4f4; border-radius:10px; margin-bottom:14px; cursor:pointer; color:var(--ink); font-weight:400; font-size:15px; }
+  .commtoggle input { width:26px; height:26px; flex:none; accent-color:#b01818; }
+  .row.commoff { display:none; }
+  .themes { display:grid; grid-template-columns: repeat(3,1fr); gap:8px; }
+  .themes button { padding:8px; font-size:13px; }
+  .themes button .sw { display:block; height:34px; border-radius:6px; margin-bottom:6px; }
+  .themes button.on { outline:3px solid var(--accent); }
+  .status { min-height:22px; font-size:14px; margin-top:10px; }
+  .status.ok { color:#1b6b34; } .status.err { color:#a01919; }
+  .savebar { position:sticky; bottom:0; background:#fff; border-top:1px solid var(--line); padding:12px 16px; display:flex; gap:10px; align-items:center; z-index:5; margin:16px -16px -16px; border-radius:0 0 12px 12px; }
+  .savebar button.primary { flex:1; padding:14px; font-size:17px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .viewtools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; margin:0 auto 14px; max-width:540px; }
+  .viewtools select { width:auto; flex:1; min-width:180px; }
+  .stage { width:100%; max-width:540px; margin:0 auto; }
+  .stage .scaler { width:100%; aspect-ratio: 9 / 16; position:relative; overflow:hidden; border-radius:10px; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+  .stage .scaler > .card { position:absolute; top:0; left:0; transform-origin: top left; }
+  .empty { text-align:center; padding:40px 16px; color:var(--muted); }
+  #codeDlg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:20; padding:16px; }
+  #codeDlg .panel { width:100%; max-width:360px; }
+
+  /* ================= PROGRAM CARD (1080 x 1920) ================= */
+  .card { width:1080px; height:1920px; position:relative; overflow:hidden; font-family:"League Spartan", sans-serif; }
+  .card .deco { position:absolute; inset:0; pointer-events:none; }
+  .card .content { position:absolute; inset:0; padding: 90px 80px 80px; display:flex; flex-direction:column; }
+  .card .head { text-align:center; flex:none; }
+  .card .items { flex:1; display:flex; flex-direction:column; justify-content:space-evenly; min-height:0; }
+  .card .it .part { font-weight:600; }
+  .card .hlx { font-family:"Great Vibes", cursive; text-align:center; line-height:1; white-space:nowrap; margin:.1em 0; }
+  .t-grace .it, .t-rose .it { margin: .32em 0; }
+  .card .xline { text-align:center; font-weight:700; margin:.32em 0; }
+  .card .note { font-size:38px; font-weight:700; margin-top:14px; line-height:1.25; }
+  .card .note.script { font-family:"Great Vibes", cursive; font-weight:400; font-size:76px; line-height:1.1; }
+  .t-grace .xline, .t-grace .note { color:#3d1846; }
+  .t-rose .note { color:#fff; }
+  .t-communion .note { color:#e9d9c3; }
+  .t-rose .xline { text-align:left; }
+  .card .closing { font-family:"Great Vibes", cursive; text-align:center; flex:none; }
+
+  /* Theme: Grace (silver, centered, floral line art) */
+  .t-grace { background: linear-gradient(180deg,#a9a9ab 0%, #e6e6e7 30%, #ffffff 52%, #ffffff 100%); color:#3a3a3d; }
+  .t-grace .church { font-family:"Great Vibes", cursive; color:#fff; font-size:96px; line-height:1.1; text-shadow:0 1px 2px rgba(0,0,0,.15); }
+  .t-grace .sub { color:#3d1846; font-weight:700; font-size:34px; margin-top:4px; }
+  .t-grace .items { text-align:center; }
+  .t-grace .it .part, .t-grace .it .person { font-weight:500; }
+  .t-grace .hlx { color:#3d1846; }
+  .t-grace .closing { color:#3d1846; }
+
+  /* Theme: Rose (dusty pink, left aligned, roses down the side) */
+  .t-rose { background:#d4979d; color:#fff; }
+  .t-rose .church { font-family:"Playfair Display", serif; font-style:italic; font-weight:700; text-transform:uppercase; font-size:92px; line-height:1.05; letter-spacing:2px; }
+  .t-rose .sub { font-family:"Amaranth", sans-serif; font-weight:700; color:#1f5a2a; font-size:44px; line-height:1.25; margin-top:24px; }
+  .t-rose .content { padding-left:212px; padding-right:60px; }
+  .t-rose .head { text-align:center; margin-left:-150px; }
+  .t-rose .items { font-family:"Amaranth", sans-serif; text-shadow:0 2px 4px rgba(0,0,0,.25); }
+  .t-rose .it .part { font-weight:700; }
+  .t-rose .it .person { font-weight:700; }
+  .t-rose .hlx { color:#8b1e2b; text-shadow:none; }
+  .t-rose .closing { color:#fff; margin-left:-150px; }
+
+  /* Theme: Communion (black, wooden cross, two columns) */
+  .t-communion { background:#000; color:#fff; }
+  .t-communion .church { font-family:"Great Vibes", cursive; font-size:150px; line-height:1; }
+  .t-communion .sub { font-family:"Amaranth", sans-serif; font-style:italic; font-size:44px; line-height:1.3; margin-top:18px; }
+  .t-communion .content { padding:80px 36px 70px 42px; }
+  .t-communion .items { margin-top:40px; }
+  .t-communion .it { display:grid; grid-template-columns: 560px 1fr; column-gap:30px; align-items:start; }
+  .t-communion .it .part { position:relative; overflow:hidden; white-space:nowrap; }
+  .t-communion .it .part.dots::after { content:" ......................................................................................................"; }
+  .t-communion .it .part.wrap { white-space:normal; }
+  .t-communion .it .person { font-weight:600; }
+  .t-communion .hlx { color:#e01010; }
+  .t-communion .closing { color:#fff; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <h1>LWFC Sunday Program</h1>
+  <a id="switchLink" href="#">…</a>
+</header>
+<main id="app"></main>
+
+<div id="codeDlg"><div class="panel">
+  <h2>Edit code</h2>
+  <p class="muted">Enter the church's edit code to save.</p>
+  <input id="codeInput" type="password" inputmode="numeric" autocomplete="off">
+  <div class="btns" style="margin-top:12px"><button class="primary" id="codeOk">Save</button><button id="codeCancel">Cancel</button></div>
+</div></div>
+
+<script>
+/* Program data is saved by the Netlify function at /api */
+var API_URL = "/api";
+</script>
+<script>
+var PAGE = new URLSearchParams(location.search).get("page") || "view";
+var START_DATE = new URLSearchParams(location.search).get("date") || "";
+var NEEDS_CODE = true;
+var APP_URL = "";
+var editCode = "";
+
+/* ---------- Server bridge (works in Apps Script; falls back to a local mock for testing) ---------- */
+var ARG_NAMES = { getProgram:["date"], listPrograms:[], checkCode:["code"], saveProgram:["program","code"], deleteProgram:["date","code"] };
+function call(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  // GitHub Pages version: talk to the Apps Script web app over the internet
+  if (window.API_URL) {
+    if (fn === "getAppUrl") return Promise.resolve(location.origin + location.pathname);
+    var body = { action: fn };
+    (ARG_NAMES[fn] || []).forEach(function (n, i) { body[n] = args[i]; });
+    var req = (fn === "getProgram" || fn === "listPrograms")
+      ? fetch(API_URL + "?api=" + fn + (fn === "getProgram" ? "&date=" + encodeURIComponent(args[0] || "") : ""))
+      : fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+    return req.then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) throw new Error(d.error || "Something went wrong.");
+      return d.result;
+    }, function () { throw new Error("Could not reach the program server. Check your internet connection."); });
+  }
+  return new Promise(function (resolve, reject) {
+    if (window.google && google.script && google.script.run) {
+      var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) { reject(e && e.message ? e : new Error(String(e))); });
+      r[fn].apply(r, args);
+    } else if (window.MOCK && MOCK[fn]) {
+      try { resolve(MOCK[fn].apply(null, args)); } catch (e) { reject(e); }
+    } else reject(new Error('Not connected'));
+  });
+}
+
+/* ---------- Templates ---------- */
+var BASE_ITEMS = [
+  ["Call to Worship",""],
+  ["Old Testament Scripture",""],
+  ["New Testament Scripture",""],
+  ["Prayer",""],
+  ["Faith Confession Scriptures (Hebrews 11:1 & Hebrews 13:8)",""],
+  ["Hymn of the Morning",""],
+  ["Victorious Testimony",""],
+  ["Praise and Worship","Living Word Fellowship Praise Team"],
+  ["Gospel Message","Superintendent Danny O. Blayde"],
+  ["Discipleship",""],
+  ["Ministry of Giving",""],
+  ["Announcements","Sister Yakita Brinson"],
+  ["Benediction",""]
+];
+function makeItems(list) { return list.map(function (x) { return x[0] === "!" ? { kind:"highlight", part:x[1], person:"", communion:true } : { kind:"item", part:x[0], person:x[1] }; }); }
+function withCommunionLine(list) {
+  var l = list.slice(), i = l.findIndex(function (x) { return x[0] === "Discipleship"; });
+  l.splice(i + 1, 0, ["!", "Holy Communion"]); return l;
+}
+var TEMPLATES = {
+  regular: function () { return { title:"Sunday Morning Worship", theme:"grace", items: makeItems(withCommunionLine(BASE_ITEMS)), closing:"", showCommunion:false }; },
+  communion: function () {
+    var l = BASE_ITEMS.filter(function (x) { return x[0] !== "Victorious Testimony"; }).slice();
+    var i = l.findIndex(function (x) { return x[0] === "Discipleship"; });
+    l.splice(i + 1, 0, ["!", "Holy Communion"]);
+    var g = l.findIndex(function (x) { return x[0] === "Ministry of Giving"; });
+    var a = l.splice(l.findIndex(function (x) { return x[0] === "Announcements"; }), 1)[0];
+    l.splice(g, 0, a);
+    return { title:"Communion Sunday", theme:"communion", items: makeItems(l), closing:"Have a Blessed Week!", showCommunion:true };
+  }
+};
+
+function nextSunday() {
+  var d = new Date(); d.setHours(12); d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
+  return isoDate(d);
+}
+function isoDate(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function prettyDate(iso) {
+  if (!iso) return "";
+  var p = iso.split("-"); var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return d.toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" });
+}
+function newProgram(kind) {
+  var t = TEMPLATES[kind || "regular"]();
+  return { date: nextSunday(), time:"10:30 AM", church:"Living Word Fellowship Church", title:t.title, theme:t.theme, items:t.items, closing:t.closing, showCommunion:t.showCommunion };
+}
+/* Older saved programs: mark the Holy Communion line and keep it showing */
+function normalize(p) {
+  var found = false;
+  (p.items || []).forEach(function (it) { if (it.kind === "highlight" && /holy\s*communion/i.test(it.part || "")) { it.communion = true; found = true; } });
+  if (p.showCommunion === undefined) p.showCommunion = found;
+  if (!found) {
+    var i = (p.items || []).findIndex(function (it) { return /discipleship/i.test(it.part || ""); });
+    p.items.splice(i < 0 ? p.items.length : i + 1, 0, { kind:"highlight", part:"Holy Communion", person:"", communion:true });
+  }
+  return p;
+}
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]; }); }
+
+/* ---------- Decorations (original line art) ---------- */
+function flowerSVG(cx, cy, r, stroke, rot) {
+  var petals = "";
+  for (var i = 0; i < 5; i++) {
+    var a = (i * 72 + (rot || 0)) * Math.PI / 180;
+    var px = cx + Math.cos(a) * r * 0.62, py = cy + Math.sin(a) * r * 0.62;
+    petals += '<ellipse cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" rx="' + (r * 0.5).toFixed(1) + '" ry="' + (r * 0.36).toFixed(1) + '" transform="rotate(' + (i * 72 + (rot || 0)) + ' ' + px.toFixed(1) + ' ' + py.toFixed(1) + ')" fill="none" stroke="' + stroke + '" stroke-width="3"/>';
+  }
+  var dots = "";
+  for (var j = 0; j < 8; j++) { var b = j * 45 * Math.PI / 180; dots += '<circle cx="' + (cx + Math.cos(b) * r * 0.18).toFixed(1) + '" cy="' + (cy + Math.sin(b) * r * 0.18).toFixed(1) + '" r="3" fill="' + stroke + '"/>'; }
+  return petals + '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.12) + '" fill="none" stroke="' + stroke + '" stroke-width="3"/>' + dots;
+}
+function decoGrace() {
+  var s = "#b9b9bd";
+  return '<svg class="deco" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M1080 600 C 980 900, 1020 1300, 900 1920" fill="none" stroke="' + s + '" stroke-width="3"/>' +
+    '<path d="M1000 980 C 940 1040, 900 1060, 860 1180" fill="none" stroke="' + s + '" stroke-width="3"/>' +
+    '<path d="M0 1720 C 120 1640, 200 1560, 250 1480" fill="none" stroke="' + s + '" stroke-width="3"/>' +
+    '<path d="M150 1600 C 190 1560, 210 1520, 200 1470" fill="none" stroke="' + s + '" stroke-width="3"/>' +
+    flowerSVG(990, 880, 110, s, 10) + flowerSVG(1030, 1300, 150, s, 30) + flowerSVG(860, 1220, 70, s, 0) +
+    flowerSVG(80, 1830, 120, s, 20) + flowerSVG(210, 1700, 80, s, 40) + flowerSVG(250, 1470, 45, s, 0) + flowerSVG(110, 1580, 55, s, 15) +
+    '</svg>';
+}
+function decoRose() {
+  var out = '<svg class="deco" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">';
+  var spots = [[40,120,150],[120,560,130],[10,880,110],[150,1120,90],[30,1420,150],[120,1760,140]];
+  spots.forEach(function (p, k) {
+    var x = p[0], y = p[1], r = p[2];
+    out += '<ellipse cx="' + (x + r * 0.9) + '" cy="' + (y + r * 0.9) + '" rx="' + (r * 0.9) + '" ry="' + (r * 0.35) + '" fill="#7d9a74" opacity=".55" transform="rotate(' + (k % 2 ? -35 : 35) + ' ' + (x + r * 0.9) + ' ' + (y + r * 0.9) + ')"/>';
+    for (var i = 5; i >= 1; i--) {
+      out += '<circle cx="' + x + '" cy="' + y + '" r="' + (r * i / 5) + '" fill="' + (i % 2 ? "#f2c4c3" : "#e7a6a8") + '" opacity="' + (0.55 + i * 0.07) + '"/>';
+    }
+    out += '<path d="M' + (x - r * .3) + ' ' + y + ' q ' + (r * .3) + ' ' + (-r * .4) + ' ' + (r * .6) + ' 0" fill="none" stroke="#c76f78" stroke-width="5"/>';
+  });
+  return out + '</svg>';
+}
+function decoCommunion() {
+  return '<div class="deco">' +
+    '<div style="position:absolute;left:465px;top:395px;width:150px;height:1480px;background:linear-gradient(90deg,#3b2a1f,#5a4232 30%,#4c372a 60%,#33241a);opacity:.95"></div>' +
+    '<div style="position:absolute;left:80px;top:775px;width:920px;height:150px;background:linear-gradient(180deg,#5a4232,#4c372a 60%,#3b2a1f);opacity:.95"></div>' +
+    '<svg viewBox="0 0 1080 1920" style="position:absolute;inset:0" xmlns="http://www.w3.org/2000/svg"><ellipse cx="540" cy="860" rx="215" ry="210" fill="none" stroke="#1d130c" stroke-width="16" stroke-dasharray="6 18" opacity=".9"/><ellipse cx="540" cy="860" rx="200" ry="195" fill="none" stroke="#2a1b10" stroke-width="7" opacity=".9"/></svg>' +
+    '</div>';
+}
+
+/* ---------- Render program card ---------- */
+function renderCard(p) {
+  var theme = p.theme || "grace";
+  var head, deco;
+  var sub = esc(p.title || "Sunday Morning Worship") + " • " + esc(prettyDate(p.date)) + " • " + esc(p.time || "");
+  if (theme === "communion") {
+    deco = decoCommunion();
+    head = '<div class="church">' + esc(p.title || "Communion Sunday") + '</div><div class="sub">' + esc(p.church) + '<br>' + esc(prettyDate(p.date)) + ' • Worship ' + esc(p.time) + '</div>';
+  } else if (theme === "rose") {
+    deco = decoRose();
+    head = '<div class="church">' + esc(p.church) + '</div><div class="sub">' + esc(p.title) + '<br>' + esc(prettyDate(p.date)) + ' • ' + esc(p.time) + '</div>';
+  } else {
+    deco = decoGrace();
+    head = '<div class="church">' + esc(p.church) + '</div><div class="sub">' + sub + '</div>';
+  }
+  // Custom lines: place them where chosen
+  var list = (p.items || []).filter(function (it) { return !(it.communion && !p.showCommunion); }), topNotes = "", bottom = [];
+  [p.extra1, p.extra2].forEach(function (x) {
+    if (!x || !(x.text || "").trim()) return;
+    var entry = { kind: x.style === "script" ? "highlight" : "extra", part: x.text, person: "" };
+    var where = x.where || "before";
+    if (where === "top") topNotes += '<div class="note' + (x.style === "script" ? ' script' : '') + '">' + esc(x.text) + '</div>';
+    else if (where === "bottom") bottom.push(entry);
+    else {
+      var bi = -1; list.forEach(function (it, i) { if (/benediction/i.test(it.part || "")) bi = i; });
+      if (bi < 0) list.push(entry); else list.splice(bi, 0, entry);
+    }
+  });
+  list = list.concat(bottom);
+  head += topNotes;
+  var items = list.map(function (it) {
+    if (it.kind === "extra") return '<div class="xline">' + esc(it.part) + '</div>';
+    if (it.kind === "highlight") return '<div class="hlx">' + esc(it.part) + '</div>';
+    if (theme === "communion") {
+      var long = (it.part || "").length > 26;
+      return '<div class="it"><div class="part ' + (it.person ? (long ? "wrap" : "dots") : (long ? "wrap" : "dots")) + '">' + esc(it.part) + '</div><div class="person">' + esc(it.person) + '</div></div>';
+    }
+    return '<div class="it"><div class="part">' + esc(it.part) + '</div>' + (it.person ? '<div class="person">' + esc(it.person) + '</div>' : '') + '</div>';
+  }).join("");
+  var closing = p.closing ? '<div class="closing">' + esc(p.closing) + '</div>' : '';
+  return '<div class="card t-' + theme + '">' + deco + '<div class="content"><div class="head">' + head + '</div><div class="items">' + items + '</div>' + closing + '</div></div>';
+}
+
+/* Shrink text until everything fits on the 1080x1920 card */
+function fitCard(card) {
+  var theme = card.className.replace("card t-", "");
+  var base = { grace: 46, rose: 46, communion: 34 }[theme] || 44;
+  var items = card.querySelector(".items"), content = card.querySelector(".content");
+  var closing = card.querySelector(".closing");
+  for (var fs = base; fs >= 22; fs -= 1) {
+    items.style.fontSize = fs + "px";
+    items.style.lineHeight = theme === "communion" ? "1.45" : "1.18";
+    card.querySelectorAll(".hlx").forEach(function (h) {
+      var hs = fs * (theme === "communion" ? 3 : 2.4); h.style.fontSize = hs + "px";
+      while (h.scrollWidth > h.clientWidth + 1 && hs > 30) { hs -= 4; h.style.fontSize = hs + "px"; }
+    });
+    if (closing) closing.style.fontSize = (fs * (theme === "communion" ? 3.2 : 2.4)) + "px";
+    items.style.justifyContent = "flex-start"; items.style.gap = "0px";
+    var over = content.scrollHeight > 1920 + 1 || items.scrollHeight > items.clientHeight + 1;
+    items.style.justifyContent = "";
+    if (!over) break;
+  }
+}
+
+function mountCard(stage, p) {
+  stage.innerHTML = '<div class="scaler">' + renderCard(p) + '</div>';
+  var scaler = stage.querySelector(".scaler"), card = scaler.querySelector(".card");
+  var doFit = function () { fitCard(card); scaleCard(scaler, card); };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(doFit);
+  doFit();
+}
+function scaleCard(scaler, card) { card.style.transform = "scale(" + (scaler.clientWidth / 1080) + ")"; }
+window.addEventListener("resize", function () { document.querySelectorAll(".scaler").forEach(function (s) { var c = s.querySelector(".card"); if (c) scaleCard(s, c); }); });
+
+/* Download as a full-size 1080x1920 PNG */
+function downloadImage(p, btn) {
+  if (!window.html2canvas) { alertMsg("Image tool did not load. Try again in a moment."); return; }
+  var holder = document.createElement("div");
+  holder.style.cssText = "position:fixed;left:-20000px;top:0;";
+  holder.innerHTML = renderCard(p);
+  document.body.appendChild(holder);
+  var card = holder.firstChild; fitCard(card);
+  if (btn) { btn.disabled = true; btn.textContent = "Preparing…"; }
+  html2canvas(card, { width:1080, height:1920, scale:1, backgroundColor:null, useCORS:true }).then(function (canvas) {
+    var url = canvas.toDataURL("image/png");
+    var a = document.createElement("a"); a.href = url; a.download = "LWFC-Program-" + p.date + ".png";
+    document.body.appendChild(a); a.click(); a.remove();
+    // Phones that block downloads: show the image so it can be long-pressed and saved.
+    var w = document.getElementById("imgOut");
+    if (w) w.innerHTML = '<p class="muted" style="text-align:center">If the download didn\'t start, press and hold the image below and choose “Save Image”.</p><img src="' + url + '" style="width:100%;max-width:540px;display:block;margin:0 auto;border-radius:10px">';
+  }).catch(function (e) { alertMsg("Could not create the image: " + e.message); })
+    .finally(function () { holder.remove(); if (btn) { btn.disabled = false; btn.textContent = "Download image"; } });
+}
+function alertMsg(m) { var s = document.getElementById("status"); if (s) { s.className = "status err"; s.textContent = m; } }
+
+/* ================= VIEW PAGE ================= */
+function showView() {
+  var app = document.getElementById("app");
+  app.innerHTML = '<div class="viewtools"><select id="pick" aria-label="Choose a Sunday"></select><button id="dl">Download image</button></div><div class="stage" id="stage"><div class="empty">Loading program…</div></div><div class="status" id="status"></div><div id="imgOut" style="margin-top:14px"></div>';
+  var current = null;
+  function load(date) {
+    call("getProgram", date || "").then(function (p) {
+      current = p;
+      if (!p) { document.getElementById("stage").innerHTML = '<div class="empty">No program has been posted yet.<br><br><a class="linkbtn" href="' + APP_URL + '?page=edit">Create this Sunday\'s program</a></div>'; return; }
+      mountCard(document.getElementById("stage"), p);
+      document.getElementById("pick").value = p.date;
+    }).catch(function (e) { alertMsg(e.message); });
+  }
+  call("listPrograms").then(function (list) {
+    var sel = document.getElementById("pick");
+    sel.innerHTML = list.map(function (d) { return '<option value="' + d + '">' + prettyDate(d) + '</option>'; }).join("") || '<option>No programs yet</option>';
+    sel.onchange = function () { load(sel.value); };
+  });
+  document.getElementById("dl").onclick = function () { if (current) downloadImage(current, this); };
+  load(START_DATE);
+}
+
+/* ================= EDIT PAGE ================= */
+var prog = null, dirty = false;
+
+function showEdit() {
+  var app = document.getElementById("app");
+  app.innerHTML =
+    '<div class="layout edit"><div>' +
+    '<div class="panel" style="margin-bottom:16px"><h2>Start from</h2><div class="btns">' +
+      '<button data-tpl="regular">Regular Sunday</button><button data-tpl="communion">Communion Sunday</button><button id="loadPrev">Copy last program</button></div>' +
+      '<div class="field" style="margin-top:12px"><label for="openDate">Or open a saved Sunday</label><select id="openDate"><option value="">— choose —</option></select></div></div>' +
+    '<div class="panel" style="margin-bottom:16px"><h2>Service details</h2>' +
+      '<div class="grid2"><div><label for="f_date">Service date</label><input id="f_date" type="date"></div><div><label for="f_time">Time</label><input id="f_time" type="text" placeholder="10:30 AM"></div></div>' +
+      '<div class="field"><label for="f_title">Service name</label><input id="f_title" type="text" placeholder="Sunday Morning Worship"></div>' +
+      '<div class="field"><label for="f_church">Church name</label><input id="f_church" type="text"></div>' +
+      '<div class="field"><label for="f_closing">Closing line (optional)</label><input id="f_closing" type="text" placeholder="Have a Blessed Week!"></div>' +
+      '<label class="commtoggle" for="f_comm"><input id="f_comm" type="checkbox"> <span><b>Include Holy Communion</b><br><span class="muted">First Sunday only — leave unchecked on other Sundays</span></span></label>' +
+      '<label>Look</label><div class="themes" id="themes">' +
+        '<button data-theme="grace"><span class="sw" style="background:linear-gradient(#a9a9ab,#fff)"></span>Silver Floral</button>' +
+        '<button data-theme="rose"><span class="sw" style="background:#d4979d"></span>Rose</button>' +
+        '<button data-theme="communion"><span class="sw" style="background:linear-gradient(90deg,#000 40%,#5a4232 40%,#5a4232 60%,#000 60%)"></span>Communion</button>' +
+      '</div></div>' +
+    '<div class="panel" style="margin-bottom:16px"><h2>Custom lines (optional)</h2><p class="muted" style="margin-top:-6px">Leave blank to hide. Example: “Special BIRTHDAY Presentations” or “Fellowship dinner after service”.</p>' +
+      [1, 2].map(function (n) {
+        return '<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fafbfc">' +
+          '<div class="field"><label for="x' + n + '_text">Custom line ' + n + '</label><input id="x' + n + '_text" type="text" placeholder="Type anything…"></div>' +
+          '<div class="grid2" style="margin-bottom:0"><div style="margin-bottom:0"><label for="x' + n + '_where">Show it</label><select id="x' + n + '_where">' +
+            '<option value="top">Under the date</option><option value="before">Before Benediction</option><option value="bottom">At the bottom</option></select></div>' +
+          '<div style="margin-bottom:0"><label for="x' + n + '_style">Style</label><select id="x' + n + '_style">' +
+            '<option value="plain">Regular text</option><option value="script">Large script</option></select></div></div></div>';
+      }).join("") +
+    '</div>' +
+    '<div class="panel"><h2>Order of service</h2><p class="muted" style="margin-top:-6px">Left box: part of the service. Right box: who is leading it (leave blank if no one).</p>' +
+      '<div id="rows"></div>' +
+      '<div class="btns" style="margin-top:8px"><button id="addRow">+ Add line</button><button id="addHl">+ Add highlight (e.g. Holy Communion)</button></div>' +
+      '<div class="savebar"><button class="primary" id="saveBtn">Save &amp; publish</button><a class="linkbtn" id="viewLink" href="#">View</a></div>' +
+      '<div class="status" id="status"></div>' +
+      '<div class="btns" style="margin-top:6px"><button class="danger" id="delBtn">Delete this Sunday</button></div>' +
+    '</div></div>' +
+    '<div class="previewcol"><div class="panel"><h2>Preview</h2><div class="stage" id="stage"></div></div></div></div>';
+
+  document.querySelectorAll("[data-tpl]").forEach(function (b) {
+    b.onclick = function () {
+      var old = prog || {};
+      prog = newProgram(b.getAttribute("data-tpl"));
+      if (old.date) prog.date = old.date;
+      if (old.extra1) prog.extra1 = old.extra1;
+      if (old.extra2) prog.extra2 = old.extra2;
+      fillForm(); touch();
+    };
+  });
+  document.querySelectorAll("[data-theme]").forEach(function (b) { b.onclick = function () { prog.theme = b.getAttribute("data-theme"); markTheme(); touch(); }; });
+  ["date","time","title","church","closing"].forEach(function (k) {
+    document.getElementById("f_" + k).addEventListener("input", function (e) { prog[k] = e.target.value; touch(); });
+  });
+  [1, 2].forEach(function (n) {
+    ["text", "where", "style"].forEach(function (f) {
+      var el = document.getElementById("x" + n + "_" + f);
+      var h = function () { var x = prog["extra" + n] = prog["extra" + n] || {}; x[f] = el.value; touch(); };
+      el.addEventListener("input", h); el.addEventListener("change", h);
+    });
+  });
+  document.getElementById("f_comm").addEventListener("change", function (e) { prog.showCommunion = e.target.checked; drawRows(); touch(); });
+  document.getElementById("addRow").onclick = function () { prog.items.push({ kind:"item", part:"", person:"" }); drawRows(); touch(); focusLast(); };
+  document.getElementById("addHl").onclick = function () { prog.items.push({ kind:"highlight", part:"", person:"" }); drawRows(); touch(); focusLast(); };
+  document.getElementById("saveBtn").onclick = save;
+  document.getElementById("delBtn").onclick = delProgram;
+  document.getElementById("loadPrev").onclick = function () {
+    call("getProgram", "").then(function (p) {
+      if (!p) { setStatus("No saved program to copy yet.", true); return; }
+      var d = prog.date; prog = JSON.parse(JSON.stringify(p)); prog.date = d; delete prog.savedAt;
+      fillForm(); touch(); setStatus("Copied from " + prettyDate(p.date) + ". Change the date if needed, then Save.");
+    });
+  };
+  var openSel = document.getElementById("openDate");
+  call("listPrograms").then(function (list) {
+    openSel.innerHTML = '<option value="">— choose —</option>' + list.map(function (d) { return '<option value="' + d + '">' + prettyDate(d) + '</option>'; }).join("");
+  });
+  openSel.onchange = function () { if (openSel.value) openDate(openSel.value); };
+  window.addEventListener("beforeunload", function (e) { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+  // Open the requested Sunday, or the upcoming one if it exists, else a fresh template.
+  var want = START_DATE || nextSunday();
+  call("getProgram", want).then(function (p) {
+    prog = p || newProgram("regular"); if (!p) prog.date = want;
+    fillForm(); render(); dirty = false;
+  }).catch(function () { prog = newProgram("regular"); fillForm(); render(); });
+}
+
+function openDate(d) {
+  call("getProgram", d).then(function (p) { if (p) { prog = p; fillForm(); render(); dirty = false; setStatus("Opened " + prettyDate(d) + "."); } });
+}
+function fillForm() {
+  ["date","time","title","church","closing"].forEach(function (k) { document.getElementById("f_" + k).value = prog[k] || ""; });
+  normalize(prog);
+  document.getElementById("f_comm").checked = !!prog.showCommunion;
+  [1, 2].forEach(function (n) {
+    var x = prog["extra" + n] || {};
+    document.getElementById("x" + n + "_text").value = x.text || "";
+    document.getElementById("x" + n + "_where").value = x.where || "before";
+    document.getElementById("x" + n + "_style").value = x.style || "plain";
+  });
+  markTheme(); drawRows();
+}
+function markTheme() { document.querySelectorAll("[data-theme]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-theme") === prog.theme); }); }
+
+function drawRows() {
+  var box = document.getElementById("rows");
+  box.innerHTML = prog.items.map(function (it, i) {
+    var hl = it.kind === "highlight";
+    return '<div class="row' + (hl ? ' hl' : '') + (it.communion && !prog.showCommunion ? ' commoff' : '') + '" data-i="' + i + '">' +
+      '<input class="part" aria-label="Part of service" placeholder="' + (hl ? 'Highlight text' : 'Part of service') + '" value="' + esc(it.part) + '">' +
+      '<input class="person" aria-label="Who is leading" placeholder="Who is leading" value="' + esc(it.person) + '">' +
+      '<div class="tools"><button title="Move up" data-a="up">↑</button><button title="Move down" data-a="down">↓</button><button title="Remove" data-a="del" class="danger">✕</button></div></div>';
+  }).join("");
+  box.querySelectorAll(".row").forEach(function (row) {
+    var i = +row.getAttribute("data-i");
+    row.querySelector(".part").addEventListener("input", function (e) { prog.items[i].part = e.target.value; touch(); });
+    row.querySelector(".person").addEventListener("input", function (e) { prog.items[i].person = e.target.value; touch(); });
+    row.querySelectorAll("[data-a]").forEach(function (b) {
+      b.onclick = function () {
+        var a = b.getAttribute("data-a"), L = prog.items;
+        if (a === "up" && i > 0) L.splice(i - 1, 0, L.splice(i, 1)[0]);
+        if (a === "down" && i < L.length - 1) L.splice(i + 1, 0, L.splice(i, 1)[0]);
+        if (a === "del") L.splice(i, 1);
+        drawRows(); touch();
+      };
+    });
+  });
+}
+function focusLast() { var ins = document.querySelectorAll("#rows .part"); if (ins.length) ins[ins.length - 1].focus(); }
+
+var renderTimer = null;
+function touch() { dirty = true; clearTimeout(renderTimer); renderTimer = setTimeout(render, 150); }
+function render() { mountCard(document.getElementById("stage"), prog); var v = document.getElementById("viewLink"); if (v) v.href = APP_URL + "?date=" + (prog.date || ""); }
+function setStatus(m, err) { var s = document.getElementById("status"); s.className = "status " + (err ? "err" : "ok"); s.textContent = m; }
+
+function save() {
+  if (NEEDS_CODE && !editCode) { askCode(save); return; }
+  var clean = JSON.parse(JSON.stringify(prog));
+  clean.items = clean.items.filter(function (it) { return (it.part || "").trim() || (it.person || "").trim(); });
+  var btn = document.getElementById("saveBtn"); btn.disabled = true; btn.textContent = "Saving…";
+  call("saveProgram", clean, editCode).then(function (d) {
+    dirty = false; setStatus("Saved! The program for " + prettyDate(d) + " is live.");
+    var sel = document.getElementById("openDate");
+    if (!sel.querySelector('option[value="' + d + '"]')) call("listPrograms").then(function (list) { sel.innerHTML = '<option value="">— choose —</option>' + list.map(function (x) { return '<option value="' + x + '">' + prettyDate(x) + '</option>'; }).join(""); });
+  }).catch(function (e) {
+    if (/edit code/i.test(e.message)) editCode = "";
+    setStatus(e.message, true);
+  }).finally(function () { btn.disabled = false; btn.innerHTML = "Save &amp; publish"; });
+}
+
+var delArmed = false;
+function delProgram() {
+  var b = document.getElementById("delBtn");
+  if (!delArmed) { delArmed = true; b.textContent = "Tap again to delete " + prettyDate(prog.date); setTimeout(function () { delArmed = false; b.textContent = "Delete this Sunday"; }, 4000); return; }
+  if (NEEDS_CODE && !editCode) { askCode(delProgram); return; }
+  delArmed = false; b.textContent = "Delete this Sunday";
+  call("deleteProgram", prog.date, editCode).then(function () { setStatus("Deleted " + prettyDate(prog.date) + "."); dirty = false; })
+    .catch(function (e) { setStatus(e.message, true); });
+}
+
+function askCode(then) {
+  var dlg = document.getElementById("codeDlg"), inp = document.getElementById("codeInput");
+  dlg.style.display = "flex"; inp.value = ""; inp.focus();
+  document.getElementById("codeOk").onclick = function () { editCode = inp.value; dlg.style.display = "none"; then(); };
+  document.getElementById("codeCancel").onclick = function () { dlg.style.display = "none"; };
+}
+
+/* Unlock screen: enter the edit code before editing */
+function showGate() {
+  if (!NEEDS_CODE) { showEdit(); return; }
+  try { editCode = sessionStorage.getItem("lwfcCode") || ""; } catch (e) {}
+  if (editCode) { call("checkCode", editCode).then(function (ok) { if (ok) showEdit(); else { editCode = ""; showGate(); } }); return; }
+  document.getElementById("app").innerHTML =
+    '<div class="panel" style="max-width:380px;margin:40px auto;text-align:center">' +
+    '<h2>Update the Sunday Program</h2><p class="muted">Enter the edit code to continue.</p>' +
+    '<form id="gateForm"><input id="gateCode" type="password" inputmode="numeric" autocomplete="off" placeholder="Edit code" style="text-align:center;font-size:22px;letter-spacing:6px">' +
+    '<button class="primary" type="submit" style="width:100%;margin-top:12px;padding:14px">Unlock</button></form>' +
+    '<div class="status" id="status"></div></div>';
+  var inp = document.getElementById("gateCode"); inp.focus();
+  document.getElementById("gateForm").onsubmit = function (e) {
+    e.preventDefault();
+    call("checkCode", inp.value).then(function (ok) {
+      if (!ok) { setStatus("That code is not correct.", true); inp.value = ""; inp.focus(); return; }
+      editCode = inp.value; try { sessionStorage.setItem("lwfcCode", editCode); } catch (x) {}
+      showEdit();
+    }).catch(function (x) { setStatus(x.message, true); });
+  };
+}
+
+/* ================= START ================= */
+function start() {
+  var sw = document.getElementById("switchLink");
+  call("getAppUrl").then(function (u) { APP_URL = u || ""; }).catch(function () {}).finally(function () {
+    if (PAGE === "edit") { sw.textContent = "View program"; sw.href = APP_URL; showGate(); }
+    else { sw.textContent = "Edit"; sw.href = APP_URL + "?page=edit"; showView(); }
+  });
+}
+start();
+</script>
+</body>
+</html>
