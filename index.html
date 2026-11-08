@@ -9,10 +9,21 @@
 <style>
   :root { --ink:#1f2430; --muted:#5b6170; --line:#d9dce3; --accent:#4b1f5c; --bg:#f4f5f8; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); background:var(--bg); }
-  header.bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
-  header.bar h1 { font-size:17px; margin:0; font-weight:650; }
-  header.bar a, .linkbtn { color:var(--accent); font-weight:600; text-decoration:none; font-size:15px; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); background:linear-gradient(180deg,#ffffff 0%,#f3eef8 100%); min-height:100vh; }
+  header.bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:12px 16px; background:#fff; border-bottom:1px solid #e3dcea; box-shadow:0 2px 10px rgba(75,31,92,.06); position:sticky; top:0; z-index:5; }
+  header.bar .brand { text-decoration:none; }
+  header.bar .brand-name { display:block; font-family:Georgia,"Times New Roman",serif; font-weight:700; font-size:20px; color:#4b1f5c; line-height:1.2; }
+  header.bar .brand-tag { display:block; font-family:Arial,Helvetica,sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8A6D1E; margin-top:2px; }
+  .navbtns { display:flex; gap:8px; flex-wrap:wrap; }
+  .navbtn { display:inline-block; font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; text-decoration:none; color:#fff; background:#4b1f5c; padding:9px 16px; border-radius:20px; }
+  .navbtn:hover { background:#3a1748; }
+  .navbtn.gold { background:#C9A227; color:#3a1748; }
+  .navbtn.gold:hover { background:#e0bd45; }
+  .bottomnav { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:20px auto 6px; }
+  .bottomnav .navbtn { font-size:14px; padding:12px 22px; }
+  .linkbtn { color:var(--accent); font-weight:600; text-decoration:none; font-size:15px; }
+  .panel h2, .viewtitle { font-family:Georgia,"Times New Roman",serif; }
+  .viewtitle { text-align:center; color:#4b1f5c; font-size:26px; margin:6px 0 14px; }
   main { max-width:1180px; margin:0 auto; padding:16px; }
   .layout { display:grid; gap:20px; }
   @media (min-width: 900px) { .layout.edit { grid-template-columns: minmax(0,1fr) 400px; align-items:start; } .layout.edit .previewcol { position:sticky; top:70px; } }
@@ -119,8 +130,14 @@
 </head>
 <body>
 <header class="bar">
-  <h1>LWFC Sunday Program</h1>
-  <a id="switchLink" href="#">…</a>
+  <a class="brand" href="https://lwfcogic.netlify.app/">
+    <span class="brand-name">Living Word Fellowship</span>
+    <span class="brand-tag" id="pageTag">This Sunday's Program</span>
+  </a>
+  <nav class="navbtns">
+    <a class="navbtn" href="https://lwfcogic.netlify.app/">&larr; Home</a>
+    <a class="navbtn gold" id="switchLink" href="#">…</a>
+  </nav>
 </header>
 <main id="app"></main>
 
@@ -372,7 +389,7 @@ function alertMsg(m) { var s = document.getElementById("status"); if (s) { s.cla
 /* ================= VIEW PAGE ================= */
 function showView() {
   var app = document.getElementById("app");
-  app.innerHTML = '<div class="viewtools"><select id="pick" aria-label="Choose a Sunday"></select><button id="dl">Download image</button></div><div class="stage" id="stage"><div class="empty">Loading program…</div></div><div class="status" id="status"></div><div id="imgOut" style="margin-top:14px"></div>';
+  app.innerHTML = '<h2 class="viewtitle">This Sunday\'s Program</h2><div class="viewtools"><select id="pick" aria-label="Choose a Sunday"></select><button id="dl">Download image</button></div><div class="stage" id="stage"><div class="empty">Loading program…</div></div><div class="bottomnav"><a class="navbtn" href="https://lwfcogic.netlify.app/">&larr; Back to Home</a><a class="navbtn gold" href="' + APP_URL + '?page=edit">&#9998; Edit Program</a></div><div class="status" id="status"></div><div id="imgOut" style="margin-top:14px"></div>';
   var current = null;
   function load(date) {
     call("getProgram", date || "").then(function (p) {
@@ -585,8 +602,8 @@ function showGate() {
 function start() {
   var sw = document.getElementById("switchLink");
   call("getAppUrl").then(function (u) { APP_URL = u || ""; }).catch(function () {}).finally(function () {
-    if (PAGE === "edit") { sw.textContent = "View program"; sw.href = APP_URL; showGate(); }
-    else { sw.textContent = "Edit"; sw.href = APP_URL + "?page=edit"; showView(); }
+    if (PAGE === "edit") { sw.textContent = "View Program"; sw.href = APP_URL; document.getElementById("pageTag").textContent = "Update the Sunday Program"; showGate(); }
+    else { sw.innerHTML = "&#9998; Edit Program"; sw.href = APP_URL + "?page=edit"; showView(); }
   });
 }
 start();
