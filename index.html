@@ -91,6 +91,14 @@
   .t-communion .note { color:#e9d9c3; }
   .t-rose .xline { text-align:left; }
   .card .closing { font-family:"Great Vibes", cursive; text-align:center; flex:none; }
+  .card .scripture { flex:none; margin-top:18px; padding:18px 26px; border-radius:16px; text-align:center; font-family:"Amaranth", Georgia, serif; line-height:1.3; }
+  .card .scripture .sh { font-family:"League Spartan", sans-serif; font-weight:700; letter-spacing:3px; text-transform:uppercase; font-size:.72em; margin-bottom:8px; }
+  .card .scripture p { margin:6px 0; font-style:italic; }
+  .card .scripture b { font-style:normal; white-space:nowrap; }
+  .t-grace .scripture { background:rgba(255,255,255,.88); border:2px solid #d9cfe3; color:#3d1846; }
+  .t-rose .scripture { background:rgba(110,35,50,.72); border:2px solid rgba(255,255,255,.6); color:#fff; margin-left:-150px; text-shadow:none; }
+  .t-communion .scripture { background:rgba(0,0,0,.78); border:2px solid #5a4232; color:#fff; }
+  .t-communion .scripture b { color:#e9d9c3; }
 
   /* Theme: Grace (silver, centered, floral line art) */
   .t-grace { background: linear-gradient(180deg,#a9a9ab 0%, #e6e6e7 30%, #ffffff 52%, #ffffff 100%); color:#3a3a3d; }
@@ -331,7 +339,11 @@ function renderCard(p) {
     return '<div class="it"><div class="part">' + esc(it.part) + '</div>' + (it.person ? '<div class="person">' + esc(it.person) + '</div>' : '') + '</div>';
   }).join("");
   var closing = p.closing ? '<div class="closing">' + esc(p.closing) + '</div>' : '';
-  return '<div class="card t-' + theme + '">' + deco + '<div class="content"><div class="head">' + head + '</div><div class="items">' + items + '</div>' + closing + '</div></div>';
+  var scripture = p.showScriptures === false ? '' :
+    '<div class="scripture"><div class="sh">Faith Confession Scriptures (KJV)</div>' +
+    '<p>&ldquo;Now faith is the substance of things hoped for, the evidence of things not seen.&rdquo; <b>&mdash; Hebrews 11:1</b></p>' +
+    '<p>&ldquo;Jesus Christ the same yesterday, and to day, and for ever.&rdquo; <b>&mdash; Hebrews 13:8</b></p></div>';
+  return '<div class="card t-' + theme + '">' + deco + '<div class="content"><div class="head">' + head + '</div><div class="items">' + items + '</div>' + closing + scripture + '</div></div>';
 }
 
 /* Shrink text until everything fits on the 1080x1920 card */
@@ -348,6 +360,7 @@ function fitCard(card) {
       while (h.scrollWidth > h.clientWidth + 1 && hs > 30) { hs -= 4; h.style.fontSize = hs + "px"; }
     });
     if (closing) closing.style.fontSize = (fs * (theme === "communion" ? 3.2 : 2.4)) + "px";
+    var scr = card.querySelector(".scripture"); if (scr) scr.style.fontSize = Math.max(24, Math.round(fs * 0.8)) + "px";
     items.style.justifyContent = "flex-start"; items.style.gap = "0px";
     var over = content.scrollHeight > 1920 + 1 || items.scrollHeight > items.clientHeight + 1;
     items.style.justifyContent = "";
@@ -424,6 +437,7 @@ function showEdit() {
       '<div class="field"><label for="f_church">Church name</label><input id="f_church" type="text"></div>' +
       '<div class="field"><label for="f_closing">Closing line (optional)</label><input id="f_closing" type="text" placeholder="Have a Blessed Week!"></div>' +
       '<label class="commtoggle" for="f_comm"><input id="f_comm" type="checkbox"> <span><b>Include Holy Communion</b><br><span class="muted">First Sunday only — leave unchecked on other Sundays</span></span></label>' +
+      '<label class="commtoggle" for="f_scr" style="background:#f3eef8;border-color:#d9cfe3"><input id="f_scr" type="checkbox" style="accent-color:#4b1f5c"> <span><b>Show Hebrews 11:1 &amp; 13:8 at the bottom</b><br><span class="muted">Faith Confession scriptures, King James Version</span></span></label>' +
       '<label>Look</label><div class="themes" id="themes">' +
         '<button data-theme="grace"><span class="sw" style="background:linear-gradient(#a9a9ab,#fff)"></span>Silver Floral</button>' +
         '<button data-theme="rose"><span class="sw" style="background:#d4979d"></span>Rose</button>' +
@@ -470,6 +484,7 @@ function showEdit() {
     });
   });
   document.getElementById("f_comm").addEventListener("change", function (e) { prog.showCommunion = e.target.checked; drawRows(); touch(); });
+  document.getElementById("f_scr").addEventListener("change", function (e) { prog.showScriptures = e.target.checked; touch(); });
   document.getElementById("addRow").onclick = function () { prog.items.push({ kind:"item", part:"", person:"" }); drawRows(); touch(); focusLast(); };
   document.getElementById("addHl").onclick = function () { prog.items.push({ kind:"highlight", part:"", person:"" }); drawRows(); touch(); focusLast(); };
   document.getElementById("saveBtn").onclick = save;
@@ -503,6 +518,7 @@ function fillForm() {
   ["date","time","title","church","closing"].forEach(function (k) { document.getElementById("f_" + k).value = prog[k] || ""; });
   normalize(prog);
   document.getElementById("f_comm").checked = !!prog.showCommunion;
+  document.getElementById("f_scr").checked = prog.showScriptures !== false;
   [1, 2].forEach(function (n) {
     var x = prog["extra" + n] || {};
     document.getElementById("x" + n + "_text").value = x.text || "";
